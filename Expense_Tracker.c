@@ -5,9 +5,9 @@
 
 #define MAX_EXPENSES 10000
 #define MAX_DESC_LEN 50
+#define MAX_ITEMS 100
 #define DATA_FILE_FORMAT "expenses_%s_%d.dat"
 #define BUDGET_FILE "budget.dat"
-#define ASCII_ART_FILE "ascii_art.txt"
 
 typedef struct {
     int id;
@@ -32,8 +32,6 @@ void deleteExpense();
 void viewEarlierMonthExpenses();
 void saveExpensesToFile(Expense expenses[], int count, const char *filename);
 int loadExpensesFromFile(Expense expenses[], const char *filename);
-void displayWelcome();
-void printAsciiArt(const char *filename);
 void initializeBudget();
 void resetBudget();
 void saveBudget();
@@ -45,7 +43,6 @@ void getExpenseFileName(char *filename, const char *month, int year);
 int main() {
     int choice;
 
-    displayWelcome();
     loadBudget();
     initializeBudget();
 
@@ -89,33 +86,6 @@ int main() {
     return 0;
 }
 
-// Display ASCII art and introduction
-void displayWelcome() {
-    printf("=========================================\n");
-
-    // Print ASCII art
-    printAsciiArt(ASCII_ART_FILE);
-
-    printf("\nWelcome to the Expense Tracker App!\n\n");
-    printf("Manage your expenses effectively by tracking them month by month.\n");
-    printf("=========================================\n\n");
-}
-
-// Print ASCII art from a file
-void printAsciiArt(const char *filename) {
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        printf("Error: ASCII art file '%s' not found.\n", filename);
-        return;
-    }
-
-    char ch;
-    while ((ch = fgetc(file)) != EOF) {
-        putchar(ch);
-    }
-
-    fclose(file);
-}
 
 // Get the expense file name for a specific month and year
 void getExpenseFileName(char *filename, const char *month, int year) {
