@@ -34,6 +34,7 @@ void viewCurrentExpenses();
 void viewPastExpenses();
 void resetMonth();
 void generateBill();
+void generateItemBill();
 void setRatio(float ratio[3]);
 void printMenu();
 void displayExpenses(const Expense *expense);
@@ -66,6 +67,12 @@ int main() {
                 resetMonth();
                 break;
             case 6:
+                generateBill();
+                break;
+            case 7:
+                generateItemBill();
+                break;
+            case 8:
                 printf("Exiting...\n");
                 return 0;
             default:
@@ -82,7 +89,9 @@ void printMenu() {
     printf("3. View Current Month Expenses\n");
     printf("4. View Past Month Expenses\n");
     printf("5. Reset Month and Budget\n");
-    printf("6. Exit\n");
+    printf("6. Generate Bill (All Expenses)\n");
+    printf("7. Generate Bill for Specific Item\n");
+    printf("8. Exit\n");
     printf("Enter your choice: ");
 }
 
@@ -192,26 +201,20 @@ void displayExpenses(const Expense *expense) {
 
     printf("\nExpenses for %s %d:\n", expense->monthName, expense->year);
     printf("Necessity Expenses:\n");
-    printf("ID\tDescription\t\tAmount (₹)\n");
-    printf("====================================\n");
     for (int i = 0; i < expense->necessityCount; i++) {
-        printf("%d\t%s\t\t₹%.2f\n", i + 1, expense->necessity[i].description, expense->necessity[i].amount);
+        printf("%d. %s - ₹%.2f\n", i + 1, expense->necessity[i].description, expense->necessity[i].amount);
         totalNecessity += expense->necessity[i].amount;
     }
-    printf("====================================\n");
-    printf("Total Necessity Spent: ₹%.2f\n\n", totalNecessity);
 
-    printf("Entertainment Expenses:\n");
-    printf("ID\tDescription\t\tAmount (₹)\n");
-    printf("====================================\n");
+    printf("\nEntertainment Expenses:\n");
     for (int i = 0; i < expense->entertainmentCount; i++) {
-        printf("%d\t%s\t\t₹%.2f\n", i + 1, expense->entertainment[i].description, expense->entertainment[i].amount);
+        printf("%d. %s - ₹%.2f\n", i + 1, expense->entertainment[i].description, expense->entertainment[i].amount);
         totalEntertainment += expense->entertainment[i].amount;
     }
-    printf("====================================\n");
-    printf("Total Entertainment Spent: ₹%.2f\n", totalEntertainment);
-    printf("====================================\n");
-    printf("Total Spent: ₹%.2f\n", totalNecessity + totalEntertainment);
+
+    printf("\nTotal Necessity: ₹%.2f\n", totalNecessity);
+    printf("Total Entertainment: ₹%.2f\n", totalEntertainment);
+    printf("Total Expenses: ₹%.2f\n", totalNecessity + totalEntertainment);
 }
 
 void viewCurrentExpenses() {
@@ -226,15 +229,15 @@ void viewCurrentExpenses() {
 }
 
 void viewPastExpenses() {
-    int month, year;
     char monthName[20];
+    int year;
 
     printf("Enter month (e.g., January): ");
     scanf(" %[^\n]", monthName);
     printf("Enter year: ");
     scanf("%d", &year);
 
-    Expense *expense = loadMonth(month, year);
+    Expense *expense = loadMonth(currentMonth, currentYear);
     if (!expense) {
         printf("No data found for %s %d.\n", monthName, year);
         return;
@@ -242,6 +245,7 @@ void viewPastExpenses() {
 
     displayExpenses(expense);
 }
+
 void addExpense() {
     int type;
     char description[MAX_DESC_LENGTH];
@@ -297,7 +301,7 @@ void deleteExpense() {
 
     for (int i = 0; i < *count; i++) {
         if (strcmp(list[i].description, description) == 0) {
-            for (int j = i; j < (*count) - 1; j++) {
+            for (int j = i; j < *count - 1; j++) {
                 list[j] = list[j + 1];
             }
             (*count)--;
@@ -307,5 +311,65 @@ void deleteExpense() {
         }
     }
 
-    printf("Expense with the given description not found.\n");
+    printf("Expense not found.\n");
+}
+
+void generateBill() {
+    Expense *expense = loadMonth(currentMonth, currentYear);
+
+    if (!expense) {
+        printf("No data for the current month. Please setup the month first.\n");
+        return;
+    }
+
+    char filename[50];
+    snprintf(filename, sizeof(filename), "bill_%s_%d.txt", expense->monthName, expense->year);
+
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        printf("Error creating bill file.\n");
+        return;
+    }
+
+    fprintf(file, "===== Expense Bill for %s %d =====\n", expense->monthName, expense->year);
+    fprintf(file, "\nNecessity Expenses:\n");
+    for (int i = 0; i < expense->necessityCount; i++) {
+        fprintf(file, "%s - ₹%.2f\n", expense->necessity[i].description, expense->necessity[i].amount);
+    }
+
+    fprintf(file, "\nEntertainment Expenses:\n");
+    for (int i = 0; i < expense->entertainmentCount; i++) {
+        fprintf(file, "%s - ₹%.2f\n", expense->entertainment[i].description, expense->entertainment[i].amount);
+    }
+
+    fclose(file);
+    printf("Bill saved to file: %s\n", filename);
+}
+
+void generateItemBill() {
+    char itemDescription[MAX_DESC_LENGTH];
+    float total = 0.0;
+    Expense *expense = loadMonth(currentMonth, currentYear);
+
+    if (!expense) {
+        printf("No data for the current month. Please setup the month first.\n");
+        return;
+    }
+
+    printf("\nEnter the item description to calculate total spent: ");
+    scanf(" %[^\n]", itemDescription);
+
+    for (int i = 0; i < expense->necessityCount; i++) {
+        if (strcmp(expense->necessity[i].description, itemDescription) == 0) {
+            total += expense->necessity[i].amount;
+        }
+    }
+
+    for (int i = 0; i < expense->entertainmentCount; i++) {
+        if (strcmp(expense->entertainment[i].description, itemDescription) == 0) {
+            total += expense->entertainment[i].amount;
+        }
+    }
+
+    printf("Total amount spent on '%s': ₹%.2f\n", itemDescription, total);
 }
