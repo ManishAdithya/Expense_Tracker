@@ -36,10 +36,10 @@ int main() {
     // Execute corresponding program
     if (choice == 1) {
         printf("\nLaunching Student Expense Tracker...\n");
-        system("gcc Expense_Tracker.c -o Expense_Tracker && ./Expense_Tracker");
+        system("gcc Student_Expense_Tracker.c -o Expense_Tracker && ./Expense_Tracker");
     } else if (choice == 2) {
         printf("\nLaunching Professional Expense Tracker...\n");
-        system("gcc Professional.c -o Professional && ./Professional");
+        system("gcc Profession_Expense_Tracker.c -o Profession && ./Profession");
     } else {
         printf("\nInvalid choice. Exiting the program.\n");
     }
