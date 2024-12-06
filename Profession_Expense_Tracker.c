@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define FILENAME "expenses.dat"
 #define MAX_ITEMS 100
@@ -15,7 +16,7 @@ typedef struct {
     int month, year;
     char monthName[20];
     float salary;
-    float ratio[3]; // Ratio: Necessity, Entertainment, Savings
+    float ratio[3]; 
     ExpenseItem necessity[MAX_ITEMS];
     ExpenseItem entertainment[MAX_ITEMS];
     int necessityCount;
@@ -40,6 +41,8 @@ void printMenu();
 void displayExpenses(const Expense *expense);
 Expense *loadMonth(int month, int year);
 void saveMonth(const Expense *expense);
+void printHeader(const char *title);
+void printDivider();
 
 int main() {
     int choice;
@@ -48,6 +51,7 @@ int main() {
 
     while (1) {
         printMenu();
+        printf("\033[1;33mEnter your choice: \033[0m");
         scanf("%d", &choice);
 
         switch (choice) {
@@ -73,7 +77,8 @@ int main() {
                 generateItemBill();
                 break;
             case 8:
-                printf("Exiting...\n");
+                printHeader("Goodbye!");
+                printf("\033[1;32mI hope this was user-friendly ;) . See you next time!\033[0m\n");
                 return 0;
             default:
                 printf("Invalid choice! Try again.\n");
@@ -82,8 +87,9 @@ int main() {
     return 0;
 }
 
+// Function Definitions
 void printMenu() {
-    printf("\n===== Expense Tracker =====\n");
+    printHeader("EXPENSE TRACKER");
     printf("1. Add Expense\n");
     printf("2. Delete Expense\n");
     printf("3. View Current Month Expenses\n");
@@ -92,7 +98,18 @@ void printMenu() {
     printf("6. Generate Bill (All Expenses)\n");
     printf("7. Generate Bill for Specific Item\n");
     printf("8. Exit\n");
-    printf("Enter your choice: ");
+    printDivider();
+}
+
+void printHeader(const char *title) {
+    printf("\n");
+    printf("╭────────────────────────────────────────╮\n");
+    printf("│ \033[1;34m%-38s\033[0m │\n", title);
+    printf("╰────────────────────────────────────────╯\n");
+}
+
+void printDivider() {
+    printf("──────────────────────────────────────────\n");
 }
 
 void setupMonth() {
@@ -100,13 +117,11 @@ void setupMonth() {
 
     printf("===== Setup Initial Month =====\n");
     printf("Enter current month (e.g., January): ");
-    scanf(" %[^\n]", currentMonthName);
+    fgets(currentMonthName, sizeof(currentMonthName), stdin);
+    currentMonthName[strcspn(currentMonthName, "\n")] = 0; // Remove trailing newline
 
     printf("Enter current year: ");
     scanf("%d", &currentYear);
-
-    expense.year = currentYear;
-    strcpy(expense.monthName, currentMonthName);
 
     printf("Enter salary for the month: ");
     scanf("%f", &expense.salary);
@@ -122,6 +137,10 @@ void setupMonth() {
     } else {
         setRatio(expense.ratio);
     }
+
+    expense.month = currentMonth = localtime(&(time_t){time(NULL)})->tm_mon + 1;
+    strcpy(expense.monthName, currentMonthName);
+    expense.year = currentYear;
 
     expense.necessityCount = 0;
     expense.entertainmentCount = 0;
@@ -199,23 +218,31 @@ void saveMonth(const Expense *expense) {
 void displayExpenses(const Expense *expense) {
     float totalNecessity = 0.0, totalEntertainment = 0.0;
 
-    printf("\nExpenses for %s %d:\n", expense->monthName, expense->year);
-    printf("Necessity Expenses:\n");
-    for (int i = 0; i < expense->necessityCount; i++) {
-        printf("%d. %s - ₹%.2f\n", i + 1, expense->necessity[i].description, expense->necessity[i].amount);
-        totalNecessity += expense->necessity[i].amount;
+    printf("\n\033[1;34mExpenses for %s %d:\033[0m\n", expense->monthName, expense->year);
+    printf("\033[1;36m╭─────────────────────────────────────────────────────────────╮\033[0m\n");
+    printf("\033[1;36m│ %-10s │ %-30s │ %-10s │\033[0m\n", "Category", "Description", "Amount (₹)");
+    printf("\033[1;36m├───────────┼────────────────────────────────┼─────────────┤\033[0m\n");
+
+    if (expense->necessityCount == 0 && expense->entertainmentCount == 0) {
+        printf("\033[1;31m│ No expenses recorded for this month.                     │\033[0m\n");
+    } else {
+        for (int i = 0; i < expense->necessityCount; i++) {
+            printf("\033[1;36m│ %-10s │ %-30s │ %-10.2f │\033[0m\n", "Necessity", expense->necessity[i].description, expense->necessity[i].amount);
+            totalNecessity += expense->necessity[i].amount;
+        }
+        for (int i = 0; i < expense->entertainmentCount; i++) {
+            printf("\033[1;36m│ %-10s │ %-30s │ %-10.2f │\033[0m\n", "Entertainment", expense->entertainment[i].description, expense->entertainment[i].amount);
+            totalEntertainment += expense->entertainment[i].amount;
+        }
     }
 
-    printf("\nEntertainment Expenses:\n");
-    for (int i = 0; i < expense->entertainmentCount; i++) {
-        printf("%d. %s - ₹%.2f\n", i + 1, expense->entertainment[i].description, expense->entertainment[i].amount);
-        totalEntertainment += expense->entertainment[i].amount;
-    }
-
-    printf("\nTotal Necessity: ₹%.2f\n", totalNecessity);
-    printf("Total Entertainment: ₹%.2f\n", totalEntertainment);
-    printf("Total Expenses: ₹%.2f\n", totalNecessity + totalEntertainment);
+    printf("\033[1;36m├───────────┴────────────────────────────────┴─────────────┤\033[0m\n");
+    printf("\033[1;36m│ %-43s │ %-10.2f │\033[0m\n", "Total Necessity Expenses", totalNecessity);
+    printf("\033[1;36m│ %-43s │ %-10.2f │\033[0m\n", "Total Entertainment Expenses", totalEntertainment);
+    printf("\033[1;36m│ %-43s │ %-10.2f │\033[0m\n", "Total Expenses", totalNecessity + totalEntertainment);
+    printf("\033[1;36m╰─────────────────────────────────────────────────────────────╯\033[0m\n");
 }
+
 
 void viewCurrentExpenses() {
     Expense *expense = loadMonth(currentMonth, currentYear);
@@ -228,23 +255,52 @@ void viewCurrentExpenses() {
     displayExpenses(expense);
 }
 
+int monthNameToIndex(const char *monthName) {
+    const char *months[] = {
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    };
+
+    for (int i = 0; i < 12; i++) {
+        if (strcasecmp(monthName, months[i]) == 0) {
+            return i + 1; // Return 1-based index
+        }
+    }
+
+    return -1; // Invalid month name
+}
+
+
 void viewPastExpenses() {
     char monthName[20];
     int year;
 
-    printf("Enter month (e.g., January): ");
-    scanf(" %[^\n]", monthName);
-    printf("Enter year: ");
-    scanf("%d", &year);
+    // Prompt user for input
+    printf("Enter month and year (e.g., January 2024): ");
+    scanf("%19s %d", monthName, &year); // Read month name and year in one line
+    getchar(); // Consume any leftover newline character
 
-    Expense *expense = loadMonth(currentMonth, currentYear);
-    if (!expense) {
-        printf("No data found for %s %d.\n", monthName, year);
+    // Convert month name to index
+    int monthIndex = monthNameToIndex(monthName);
+    if (monthIndex == -1) {
+        printf("\033[1;31mInvalid month name entered.\033[0m\n");
         return;
     }
 
-    displayExpenses(expense);
+    // Attempt to load expenses for the specified month and year
+    Expense *expenses = loadMonth(monthIndex, year);
+    if (!expenses) {
+        printf("\033[1;33mNo details entered for %s %d.\033[0m\n", monthName, year);
+        return;
+    }
+
+    // Display expenses for the month
+    printf("\n\033[1;34mExpenses for %s %d:\033[0m\n", monthName, year);
+    displayExpenses(expenses); // Reuse the displayExpenses function for neat output
 }
+
+
+
 
 void addExpense() {
     int type;
@@ -348,7 +404,6 @@ void generateBill() {
 
 void generateItemBill() {
     char itemDescription[MAX_DESC_LENGTH];
-    float total = 0.0;
     Expense *expense = loadMonth(currentMonth, currentYear);
 
     if (!expense) {
@@ -356,20 +411,48 @@ void generateItemBill() {
         return;
     }
 
-    printf("\nEnter the item description to calculate total spent: ");
-    scanf(" %[^\n]", itemDescription);
+    printf("Enter the item description to generate bill for: ");
+    fgets(itemDescription, sizeof(itemDescription), stdin);
+    itemDescription[strcspn(itemDescription, "\n")] = 0; // Remove trailing newline
 
+
+
+    char filename[50];
+    snprintf(filename, sizeof(filename), "item_bill_%s_%d.txt", expense->monthName, expense->year);
+
+    FILE *file = fopen(filename, "w");
+    if (!file) {
+        printf("Error creating bill file.\n");
+        return;
+    }
+
+    fprintf(file, "===== Itemized Bill for '%s' in %s %d =====\n", itemDescription, expense->monthName, expense->year);
+
+    int found = 0;
+
+    fprintf(file, "\nNecessity Expenses:\n");
     for (int i = 0; i < expense->necessityCount; i++) {
-        if (strcmp(expense->necessity[i].description, itemDescription) == 0) {
-            total += expense->necessity[i].amount;
+        if (strstr(expense->necessity[i].description, itemDescription)) {
+            fprintf(file, "%s - ₹%.2f\n", expense->necessity[i].description, expense->necessity[i].amount);
+            found = 1;
         }
     }
 
+    fprintf(file, "\nEntertainment Expenses:\n");
     for (int i = 0; i < expense->entertainmentCount; i++) {
-        if (strcmp(expense->entertainment[i].description, itemDescription) == 0) {
-            total += expense->entertainment[i].amount;
+        if (strstr(expense->entertainment[i].description, itemDescription)) {
+            fprintf(file, "%s - ₹%.2f\n", expense->entertainment[i].description, expense->entertainment[i].amount);
+            found = 1;
         }
     }
 
-    printf("Total amount spent on '%s': ₹%.2f\n", itemDescription, total);
+    fclose(file);
+
+    if (found) {
+        printf("Itemized bill saved to file: %s\n", filename);
+    } else {
+        printf("No expenses found for the item '%s'.\n", itemDescription);
+        remove(filename); // Clean up if the file is empty
+    }
 }
+
