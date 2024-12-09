@@ -1,0 +1,38 @@
+MAIN EXPENSE TRACKER CODE
+
+#include <stdio.h>:
+This header file provides input/output functionalities, such as printf, scanf, and file handling functions (fopen, fgetc, etc.).
+
+#include <stdlib.h>:
+This header file provides utility functions such as system, memory allocation functions, and other general utilities.
+
+Why use pointer for displaying ascii art .. why not normal string usage ?
+
+Inbuilt function like fopen, fgetc and all intake pointers as input, therfore taking in pointer input for the method "dispplay_ascii_art" is needed.
+
+What is fgetc ?
+
+The fgetc function reads one character at a time from the file. The loop continues until the end of the file (EOF, which stands for "End of File") is reached.
+
+
+STUDENT EXPENSE TRACKER CODE
+
+#include <string.h>: For string operations like strcmp, strcpy, etc.
+#include <time.h>: Provides date and time functions 
+
+typedef struct {
+    int id;
+    char description[MAX_DESC_LEN];
+    float amount;
+} Expense;
+
+
+typedef: Creates an alias. Here, struct is aliased as Expense.
+Expense stores:
+	id: Unique identifier for the expense.
+	description: Short description (max 50 chars).
+	amount: Expense amount.
+	
+	
+
+

@@ -21,10 +21,8 @@ typedef struct {
     float spent;
 } Budget;
 
-// Global variables
 Budget currentBudget;
 
-// Function prototypes
 void addExpense();
 void viewExpenses();
 void deleteExpense();
@@ -34,7 +32,6 @@ int loadExpensesFromFile(Expense expenses[], const char *filename);
 void initializeBudget();
 void resetBudget();
 void saveBudget();
-void loadBudget();
 void updateSpentAmount();
 void getExpenseFileName(char *filename, const char *month, int year);
 void printMenu();
@@ -42,11 +39,8 @@ void printHeader(const char *title);
 void printDivider();
 void getExpenseForCategory();
 
-// Main function
 int main() {
     int choice;
-
-    loadBudget();
     initializeBudget();
 
     do {
@@ -80,12 +74,12 @@ int main() {
             default:
                 printf("\033[1;31mInvalid choice. Please try again.\033[0m\n");
         }
-    } while (choice != 6);
+    } while (choice != 7);
 
     return 0;
 }
 
-// Menu display
+
 void printMenu() {
     printHeader("EXPENSE TRACKER");
     printf("\033[1;36m1. Add Expense\n");
@@ -98,7 +92,7 @@ void printMenu() {
     printDivider();
 }
 
-// Display header
+
 void printHeader(const char *title) {
     printf("\n");
     printf("╭────────────────────────────────────────╮\n");
@@ -106,18 +100,25 @@ void printHeader(const char *title) {
     printf("╰────────────────────────────────────────╯\n");
 }
 
-// Divider for sections
+
 void printDivider() {
     printf("──────────────────────────────────────────\n");
 }
 
-// Get the expense file name for a specific month and year
+
 void getExpenseFileName(char *filename, const char *month, int year) {
     sprintf(filename, DATA_FILE_FORMAT, month, year);
 }
 
-// Initialize budget if it's a new month
+
 void initializeBudget() {
+    FILE *file = fopen(BUDGET_FILE, "rb");
+
+    if (file != NULL) {
+        fread(&currentBudget, sizeof(Budget), 1, file);
+        fclose(file);
+    }
+
     time_t now = time(NULL);
     struct tm *local = localtime(&now);
 
@@ -125,18 +126,19 @@ void initializeBudget() {
     int currentYear = local->tm_year + 1900;
     strftime(currentMonth, sizeof(currentMonth), "%B", local);
 
-    if (strcmp(currentBudget.month, currentMonth) != 0 || currentBudget.year != currentYear) {
-        printf("\033[1;33mIt seems the month has changed. Please reset the budget.\033[0m\n");
+    if (file == NULL || strcmp(currentBudget.month, currentMonth) != 0 || currentBudget.year != currentYear) {
+        printf("\033[1;33mNo budget set or outdated budget found. Please set the budget for %s %d.\033[0m\n",
+               currentMonth, currentYear);
         resetBudget();
     } else {
-        printf("\033[1;32mLoaded budget for %s %d. Remaining: ₹%.2f\033[0m\n", 
+        printf("\033[1;32mLoaded budget for %s %d. Remaining: ₹%.2f\033[0m\n",
                currentBudget.month, currentBudget.year, currentBudget.budget - currentBudget.spent);
+        updateSpentAmount();
     }
-
-    updateSpentAmount();
 }
 
-// Reset the month, year, and budget
+
+
 void resetBudget() {
     printf("\033[1;36mEnter the month: \033[0m");
     scanf("%s", currentBudget.month);
@@ -152,7 +154,7 @@ void resetBudget() {
     printf("\033[1;32mBudget set successfully for %s %d.\033[0m\n", currentBudget.month, currentBudget.year);
 }
 
-// Save budget to file
+
 void saveBudget() {
     FILE *file = fopen(BUDGET_FILE, "wb");
     if (file == NULL) {
@@ -163,18 +165,8 @@ void saveBudget() {
     fclose(file);
 }
 
-// Load budget from file
-void loadBudget() {
-    FILE *file = fopen(BUDGET_FILE, "rb");
-    if (file == NULL) {
-        printf("\033[1;33mNo previous budget found. Please set up a new budget.\033[0m\n");
-        return;
-    }
-    fread(&currentBudget, sizeof(Budget), 1, file);
-    fclose(file);
-}
 
-// Add an expense
+
 void addExpense() {
     Expense expenses[MAX_EXPENSES];
     char filename[50];
@@ -211,7 +203,6 @@ void addExpense() {
     printf("\033[1;32mExpense added successfully.\033[0m\n");
 }
 
-// Save expenses to file
 void saveExpensesToFile(Expense expenses[], int count, const char *filename) {
     FILE *file = fopen(filename, "wb");
     if (file == NULL) {
@@ -222,7 +213,6 @@ void saveExpensesToFile(Expense expenses[], int count, const char *filename) {
     fclose(file);
 }
 
-// Load expenses from file
 int loadExpensesFromFile(Expense expenses[], const char *filename) {
     FILE *file = fopen(filename, "rb");
     if (file == NULL) {
@@ -237,7 +227,6 @@ int loadExpensesFromFile(Expense expenses[], const char *filename) {
     return count;
 }
 
-// Update spent amount based on saved expenses
 void updateSpentAmount() {
     Expense expenses[MAX_EXPENSES];
     char filename[50];
@@ -251,7 +240,6 @@ void updateSpentAmount() {
     }
 }
 
-// View current month's expenses
 void viewExpenses() {
     Expense expenses[MAX_EXPENSES];
     char filename[50];
@@ -276,7 +264,6 @@ void viewExpenses() {
     printf("\033[1;33m╰───────┴──────────────────────────────────┴──────────────╯\033[0m\n");
 }
 
-// Delete an expense
 void deleteExpense() {
     Expense expenses[MAX_EXPENSES];
     char filename[50];
@@ -321,7 +308,6 @@ void deleteExpense() {
     printf("\033[1;32mExpense deleted successfully.\033[0m\n");
 }
 
-// View earlier month's expenses
 void viewEarlierMonthExpenses() {
     Expense expenses[MAX_EXPENSES];
     char month[20];
@@ -355,7 +341,6 @@ void viewEarlierMonthExpenses() {
     printf("\033[1;33m╰───────┴──────────────────────────────────┴──────────────╯\033[0m\n");
 }
 
-// Get total expense for a category
 void getExpenseForCategory() {
     Expense expenses[MAX_EXPENSES];
     char filename[50];

@@ -23,11 +23,9 @@ typedef struct {
     int entertainmentCount;
 } Expense;
 
-// Global variables
 int currentMonth = 0, currentYear = 0;
 char currentMonthName[20];
 
-// Function prototypes
 void setupMonth();
 void addExpense();
 void deleteExpense();
@@ -47,7 +45,7 @@ void printDivider();
 int main() {
     int choice;
 
-    setupMonth(); // Initialize the first month setup
+    setupMonth();
 
     while (1) {
         printMenu();
@@ -87,7 +85,6 @@ int main() {
     return 0;
 }
 
-// Function Definitions
 void printMenu() {
     printHeader("EXPENSE TRACKER");
     printf("1. Add Expense\n");
@@ -263,11 +260,11 @@ int monthNameToIndex(const char *monthName) {
 
     for (int i = 0; i < 12; i++) {
         if (strcasecmp(monthName, months[i]) == 0) {
-            return i + 1; // Return 1-based index
+            return i + 1; 
         }
     }
 
-    return -1; // Invalid month name
+    return -1; 
 }
 
 
@@ -275,28 +272,24 @@ void viewPastExpenses() {
     char monthName[20];
     int year;
 
-    // Prompt user for input
     printf("Enter month and year (e.g., January 2024): ");
-    scanf("%19s %d", monthName, &year); // Read month name and year in one line
-    getchar(); // Consume any leftover newline character
+    scanf("%19s %d", monthName, &year); 
+    getchar(); 
 
-    // Convert month name to index
     int monthIndex = monthNameToIndex(monthName);
     if (monthIndex == -1) {
         printf("\033[1;31mInvalid month name entered.\033[0m\n");
         return;
     }
 
-    // Attempt to load expenses for the specified month and year
     Expense *expenses = loadMonth(monthIndex, year);
     if (!expenses) {
         printf("\033[1;33mNo details entered for %s %d.\033[0m\n", monthName, year);
         return;
     }
 
-    // Display expenses for the month
     printf("\n\033[1;34mExpenses for %s %d:\033[0m\n", monthName, year);
-    displayExpenses(expenses); // Reuse the displayExpenses function for neat output
+    displayExpenses(expenses); 
 }
 
 
@@ -452,7 +445,7 @@ void generateItemBill() {
         printf("Itemized bill saved to file: %s\n", filename);
     } else {
         printf("No expenses found for the item '%s'.\n", itemDescription);
-        remove(filename); // Clean up if the file is empty
+        remove(filename); 
     }
 }
 
