@@ -25,22 +25,34 @@ Budget currentBudget;
 
 void addExpense();
 void viewExpenses();
-void deleteExpense();
 void viewEarlierMonthExpenses();
-void saveExpensesToFile(Expense expenses[], int count, const char *filename);
-int loadExpensesFromFile(Expense expenses[], const char *filename);
-void initializeBudget();
+void deleteExpense();
 void resetBudget();
+void getExpenseForCategory();
+void viewBalance();
+void generateBill();
+
+void initializeBudget();
+void saveExpensesToFile(Expense expenses[], int count, const char *filename);
+int  loadExpensesFromFile(Expense expenses[], const char *filename);
 void saveBudget();
 void updateSpentAmount();
 void getExpenseFileName(char *filename, const char *month, int year);
+
+void display_ascii_art(const char *filename);
 void printMenu();
 void printHeader(const char *title);
 void printDivider();
-void getExpenseForCategory();
+
 
 int main() {
     int choice;
+
+    display_ascii_art("ascii_art.txt");
+    printf("\nWelcome to the Expense Tracker App!\n");
+    printf("\nManage your expenses effectively by tracking them month by month.\n");
+    printf("=========================================\n\n");
+
     initializeBudget();
 
     do {
@@ -68,17 +80,39 @@ int main() {
                 getExpenseForCategory();
                 break;
             case 7:
+                viewBalance();
+                break;
+            case 8:
+                generateBill();
+                break;
+            case 9:
                 printHeader("Goodbye!");
                 printf("\033[1;32mI hope this was user-friendly ;) . See you next time!\033[0m\n");
                 break;
             default:
                 printf("\033[1;31mInvalid choice. Please try again.\033[0m\n");
         }
-    } while (choice != 7);
+    } while (choice != 9);
 
     return 0;
 }
 
+
+////// PRINT FUNCTIONS ///////
+
+void display_ascii_art(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Error: Could not open ASCII art file.\n");
+        return;
+    }
+
+    char ch;
+    while ((ch = fgetc(file)) != EOF) {
+        putchar(ch);  //printf can be used ?
+    }
+    fclose(file);
+}
 
 void printMenu() {
     printHeader("EXPENSE TRACKER");
@@ -87,11 +121,12 @@ void printMenu() {
     printf("3. View Earlier Month Expenses\n");
     printf("4. Delete Expense\n");
     printf("5. Reset Month and Budget\n");
-    printf("6. Total Expense for a Category\033[0m\n");
-    printf("7. Exit\n");
+    printf("6. Total Expense for a Category\n");
+    printf("7. View balance\n");
+    printf("8. Generate Bill \033[0m\n");
+    printf("9. Exit\n");
     printDivider();
 }
-
 
 void printHeader(const char *title) {
     printf("\n");
@@ -100,16 +135,19 @@ void printHeader(const char *title) {
     printf("╰────────────────────────────────────────╯\n");
 }
 
-
 void printDivider() {
     printf("──────────────────────────────────────────\n");
 }
+//////////////////////////////////////
 
+
+
+
+//////// BACKGROUND FUNCTIONS ///////////
 
 void getExpenseFileName(char *filename, const char *month, int year) {
     sprintf(filename, DATA_FILE_FORMAT, month, year);
 }
-
 
 void initializeBudget() {
     FILE *file = fopen(BUDGET_FILE, "rb");
@@ -137,24 +175,6 @@ void initializeBudget() {
     }
 }
 
-
-
-void resetBudget() {
-    printf("\033[1;36mEnter the month: \033[0m");
-    scanf("%s", currentBudget.month);
-
-    printf("\033[1;36mEnter the year: \033[0m");
-    scanf("%d", &currentBudget.year);
-
-    printf("\033[1;36mEnter your budget for %s %d: \033[0m", currentBudget.month, currentBudget.year);
-    scanf("%f", &currentBudget.budget);
-
-    currentBudget.spent = 0.0;
-    saveBudget();
-    printf("\033[1;32mBudget set successfully for %s %d.\033[0m\n", currentBudget.month, currentBudget.year);
-}
-
-
 void saveBudget() {
     FILE *file = fopen(BUDGET_FILE, "wb");
     if (file == NULL) {
@@ -163,44 +183,6 @@ void saveBudget() {
     }
     fwrite(&currentBudget, sizeof(Budget), 1, file);
     fclose(file);
-}
-
-
-
-void addExpense() {
-    Expense expenses[MAX_EXPENSES];
-    char filename[50];
-    getExpenseFileName(filename, currentBudget.month, currentBudget.year);
-
-    int count = loadExpensesFromFile(expenses, filename);
-
-    if (count >= MAX_EXPENSES) {
-        printf("\033[1;31mError: Expense limit reached.\033[0m\n");
-        return;
-    }
-
-    Expense newExpense;
-    newExpense.id = (count == 0) ? 1 : expenses[count - 1].id + 1;
-    printf("\033[1;36mEnter description: \033[0m");
-    getchar(); 
-    fgets(newExpense.description, MAX_DESC_LEN, stdin);
-    newExpense.description[strcspn(newExpense.description, "\n")] = '\0';
-
-    printf("\033[1;36mEnter amount (in ₹): \033[0m");
-    scanf("%f", &newExpense.amount);
-
-    currentBudget.spent += newExpense.amount;
-    if (currentBudget.spent > currentBudget.budget) {
-        printf("\033[1;31mWARNING: YOU HAVE EXCEEDED YOUR BUDGET!\033[0m\n");
-    } else {
-        printf("\033[1;32mYou can still spend ₹%.2f this month.\033[0m\n", currentBudget.budget - currentBudget.spent);
-    }
-
-    expenses[count++] = newExpense;
-    saveExpensesToFile(expenses, count, filename);
-    saveBudget();
-
-    printf("\033[1;32mExpense added successfully.\033[0m\n");
 }
 
 void saveExpensesToFile(Expense expenses[], int count, const char *filename) {
@@ -239,6 +221,47 @@ void updateSpentAmount() {
         currentBudget.spent += expenses[i].amount;
     }
 }
+///////////////////////////////////////////////
+
+
+
+///////// FRONTEND FUNCTIONS  /////////////////
+
+void addExpense() {
+    Expense expenses[MAX_EXPENSES];
+    char filename[MAX_DESC_LEN];
+    getExpenseFileName(filename, currentBudget.month, currentBudget.year);
+
+    int count = loadExpensesFromFile(expenses, filename);
+
+    if (count >= MAX_EXPENSES) {
+        printf("\033[1;31mError: Expense limit reached.\033[0m\n");
+        return;
+    }
+
+    Expense newExpense;
+    newExpense.id = (count == 0) ? 1 : expenses[count - 1].id + 1;
+    printf("\033[1;36mEnter description: \033[0m");
+    getchar(); 
+    fgets(newExpense.description, MAX_DESC_LEN, stdin);
+    newExpense.description[strcspn(newExpense.description, "\n")] = '\0';
+
+    printf("\033[1;36mEnter amount (in ₹): \033[0m");
+    scanf("%f", &newExpense.amount);
+
+    currentBudget.spent += newExpense.amount;
+    if (currentBudget.spent > currentBudget.budget) {
+        printf("\033[1;31mWARNING: YOU HAVE EXCEEDED YOUR BUDGET!\033[0m\n");
+    } else {
+        printf("\033[1;32mYou can still spend ₹%.2f this month.\033[0m\n", currentBudget.budget - currentBudget.spent);
+    }
+
+    expenses[count++] = newExpense;
+    saveExpensesToFile(expenses, count, filename);
+    saveBudget();
+
+    printf("\033[1;32mExpense added successfully.\033[0m\n");
+}
 
 void viewExpenses() {
     Expense expenses[MAX_EXPENSES];
@@ -253,6 +276,39 @@ void viewExpenses() {
     }
 
     printHeader("CURRENT MONTH EXPENSES");
+    printf("\033[1;33m╭───────┬──────────────────────────────────┬──────────────╮\n");
+    printf("│  ID   │ Description                      │ Amount (₹)   │\n");
+    printf("├───────┼──────────────────────────────────┼──────────────┤\033[0m\n");
+
+    for (int i = 0; i < count; i++) {
+        printf("\033[1;36m│ %-5d │ %-32s │ %-12.2f │\033[0m\n", expenses[i].id, expenses[i].description, expenses[i].amount);
+    }
+
+    printf("\033[1;33m╰───────┴──────────────────────────────────┴──────────────╯\033[0m\n");
+}
+
+void viewEarlierMonthExpenses() {
+    Expense expenses[MAX_EXPENSES];
+    char month[20];
+    int year;
+
+    printf("\033[1;36mEnter the month: \033[0m");
+    scanf("%s", month);
+
+    printf("\033[1;36mEnter the year: \033[0m");
+    scanf("%d", &year);
+
+    char filename[50];
+    getExpenseFileName(filename, month, year);
+
+    int count = loadExpensesFromFile(expenses, filename);
+
+    if (count == 0) {
+        printf("\033[1;31mNo expenses recorded for %s %d.\033[0m\n", month, year);
+        return;
+    }
+
+    printHeader("EARLIER MONTH EXPENSES");
     printf("\033[1;33m╭───────┬──────────────────────────────────┬──────────────╮\n");
     printf("│  ID   │ Description                      │ Amount (₹)   │\n");
     printf("├───────┼──────────────────────────────────┼──────────────┤\033[0m\n");
@@ -308,37 +364,19 @@ void deleteExpense() {
     printf("\033[1;32mExpense deleted successfully.\033[0m\n");
 }
 
-void viewEarlierMonthExpenses() {
-    Expense expenses[MAX_EXPENSES];
-    char month[20];
-    int year;
-
+void resetBudget() {
     printf("\033[1;36mEnter the month: \033[0m");
-    scanf("%s", month);
+    scanf("%s", currentBudget.month);
 
     printf("\033[1;36mEnter the year: \033[0m");
-    scanf("%d", &year);
+    scanf("%d", &currentBudget.year);
 
-    char filename[50];
-    getExpenseFileName(filename, month, year);
+    printf("\033[1;36mEnter your budget for %s %d: \033[0m", currentBudget.month, currentBudget.year);
+    scanf("%f", &currentBudget.budget);
 
-    int count = loadExpensesFromFile(expenses, filename);
-
-    if (count == 0) {
-        printf("\033[1;31mNo expenses recorded for %s %d.\033[0m\n", month, year);
-        return;
-    }
-
-    printHeader("EARLIER MONTH EXPENSES");
-    printf("\033[1;33m╭───────┬──────────────────────────────────┬──────────────╮\n");
-    printf("│  ID   │ Description                      │ Amount (₹)   │\n");
-    printf("├───────┼──────────────────────────────────┼──────────────┤\033[0m\n");
-
-    for (int i = 0; i < count; i++) {
-        printf("\033[1;36m│ %-5d │ %-32s │ %-12.2f │\033[0m\n", expenses[i].id, expenses[i].description, expenses[i].amount);
-    }
-
-    printf("\033[1;33m╰───────┴──────────────────────────────────┴──────────────╯\033[0m\n");
+    currentBudget.spent = 0.0;
+    saveBudget();
+    printf("\033[1;32mBudget set successfully for %s %d.\033[0m\n", currentBudget.month, currentBudget.year);
 }
 
 void getExpenseForCategory() {
@@ -368,3 +406,61 @@ void getExpenseForCategory() {
 
     printf("\033[1;32mTotal expense for '%s': ₹%.2f\033[0m\n", category, total);
 }
+
+
+void viewBalance() {
+    float remaining = currentBudget.budget - currentBudget.spent;
+    if (remaining < 0) {
+        printf("\033[1;31mYou have exceeded your budget by ₹%.2f!\033[0m\n", -remaining);
+    } else {
+        printf("\033[1;32mRemaining budget for %s %d: ₹%.2f\033[0m\n", currentBudget.month, currentBudget.year, remaining);
+    }
+}
+
+void generateBill() {
+    Expense expenses[MAX_EXPENSES];
+    char month[20];
+    int year;
+
+    printf("\033[1;36mEnter the month for which to generate the bill: \033[0m");
+    scanf("%s", month);
+    printf("\033[1;36mEnter the year: \033[0m");
+    scanf("%d", &year);
+
+    char filename[50];
+    getExpenseFileName(filename, month, year);
+
+    int count = loadExpensesFromFile(expenses, filename);
+
+    if (count == 0) {
+        printf("\033[1;31mNo expenses recorded for %s %d. Bill cannot be generated.\033[0m\n", month, year);
+        return;
+    }
+
+    char billFile[50];
+    sprintf(billFile, "bill_%s_%d.txt", month, year);
+
+    FILE *file = fopen(billFile, "w");
+    if (file == NULL) {
+        perror("Error creating bill file");
+        return;
+    }
+
+    fprintf(file, "Expense Bill for %s %d\n", month, year);
+    fprintf(file, "────────────────────────────────────────────────\n");
+    fprintf(file, "ID    Description                     Amount (₹)\n");
+    fprintf(file, "────────────────────────────────────────────────\n");
+
+    for (int i = 0; i < count; i++) {
+        fprintf(file, "%-5d %-30s ₹%.2f\n", expenses[i].id, expenses[i].description, expenses[i].amount);
+    }
+
+    fclose(file);
+
+    printf("\033[1;32mBill successfully generated: %s\033[0m\n", billFile);
+}
+
+///////////////////////////////////////////////////
+
+
+////// THE END //////////

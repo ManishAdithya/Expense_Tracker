@@ -1,33 +1,16 @@
 ## Expense Tracker
 
-The program is divided into 2 : 
+This is a simple CLI based project, which is very user friendly and aims to develop money saving mentality from a very yound age, i.e FOR STUDENTS. The student can track his/her everyday requirements and try to save money .
 
-	1. Student
-
-	2. Working Profesional
-
-If you would like to use **only the Student features**, use the below command 
+To run this program , use the below command
 
 ```
-gcc -o Student_Expense_Tracker Student_Expense_Tracker.c
-
-./Student_Expense_Tracker
+gcc Student_Expense_Tracker.c -o ExpenseTracker
+./ExpenseTracker
 ```
 
-If you would like to use **only the Working Professional features** , use the below command
+Thank me later :) 
 
-```
-gcc -o Profession_Expense_Tracker Profession_Expense_Tracker.c
 
-./Profession_Expense_Tracker
-```
-
-**If you would like to use both :  (RECOMMENDED)**
-
-```
-gcc -o Expense_Tracker Expense_Tracker.c
-
-./Expense_Tracker
-```
 
 
